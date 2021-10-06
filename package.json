@@ -1,0 +1,14 @@
+{
+  "name": "loan_calculator",
+  "version": "1.0.0",
+  "description": "A simple networked application to calculate loan",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hadi Khalili",
+  "license": "ISC",
+  "dependencies": {
+    "handlebars": "^4.7.7"
+  }
+}

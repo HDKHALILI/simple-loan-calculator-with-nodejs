@@ -1,8 +1,9 @@
 const HTTP = require("http");
 const URL = require("url").URL;
+const HANDLEBARS = require("handlebars");
 
 const PORT = 3000;
-const HTML_START = `
+const SOURCE = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -28,11 +29,20 @@ const HTML_START = `
       }
 
       table {
-        font-size: 2rem;
+        font-size: 1.5rem;
       }
 
       th {
         text-align: right;
+      }
+
+      td {
+        text-align: center;
+      }
+
+      th,
+      td {
+        padding: 0.5rem;
       }
     </style>
   </head>
@@ -40,14 +50,46 @@ const HTML_START = `
     <article>
       <h1>Loan Calculator</h1>
       <table>
-        <tbody>`;
-
-const HTML_END = `
+        <tbody>
+          <tr>
+            <th>Amount:</th>
+            <td>
+              <a href='/?amount={{amountDecrement}}&&duration={{duration}}'>- $100</a>
+            <td>
+            <td>\${{amount}}</td>
+            <td>
+              <a href='/?amount={{amountIncrement}}&duration={{duration}}'>+ $100</a>
+            <td>
+          </tr>
+          <tr>
+            <th>Duration:</th>
+            <td>
+              <a href='/?amount={{amount}}&duration={{durationDecrement}}'>- 1 year</a>
+            </td>
+            <td>{{duration}}</td>
+            <td>
+              <a href='/?amount={{amount}}&duration={{durationIncrement}}'>+ 1 year</a>
+            <td>
+          </tr>
+          <tr>
+            <th>APR:</th>
+            <td colspan='3'>{{apr}}%</td>
+          </tr>
+          <tr>
+            <th>Monthly payment</th>
+            <td colspan='3'>\${{payment}}</td>
+          <tr>
         </tbody>
       </table>
     </article>
   </body>
 </html>`;
+
+const LOAN_SUMMARY_TEMPLATE = HANDLEBARS.compile(SOURCE);
+
+function render(template, data) {
+  return template(data);
+}
 
 function getParams(path, host) {
   const myURL = new URL(path, `http://${host}`);
@@ -72,54 +114,18 @@ function calculateMonthlyPayment(amount, duration, apr) {
 
 function getLoanSummary(amount, duration) {
   const APR = 5;
-  const payment = calculateMonthlyPayment(amount, duration, APR);
+  const data = {};
 
-  let summary = "";
-  summary += getAmountTableRow(amount, duration);
-  summary += getDurationTableRow(amount, duration);
-  summary += getTableRow("APR", `${APR}%`);
-  summary += getTableRow("Monthly repayment", `$${payment}`);
+  data.amount = amount;
+  data.amountIncrement = data.amount + 100;
+  data.amountDecrement = data.amount - 100;
+  data.duration = duration;
+  data.durationIncrement = data.duration + 1;
+  data.durationDecrement = data.duration - 1;
+  data.apr = APR;
+  data.payment = calculateMonthlyPayment(amount, duration, APR);
 
-  return `${HTML_START}${summary}${HTML_END}`;
-}
-
-function getAmountTableRow(amount, duration) {
-  return `
-  <tr>
-    <th>Amount</th>
-    <td>
-      <a href='/?amount=${amount - 100}&duration=${duration}'>- 100</a>
-    </td>
-    <td>$${amount}</td>
-    <td>
-      <a href='/?amount=${amount + 100}&duration=${duration}'>+ $100</a>
-    </td>
-  </tr>
-`;
-}
-
-function getDurationTableRow(amount, duration) {
-  return `
-  <tr>
-    <th>Duration</th>
-    <td>
-      <a href='/?amount=${amount}&duration=${duration - 1}'>- 1 year</a>
-    </td>
-    <td>$${duration}</td>
-    <td>
-      <a href='/?amount=${amount}&duration=${duration + 1}'>+ 1 year</a>
-    </td>
-  </tr>
-`;
-}
-
-function getTableRow(header, data) {
-  return `
-      <tr>
-        <th>${header}</th>
-        <td colspan='3'>${data}</td>
-      </tr>
-    `;
+  return data;
 }
 
 const SERVER = HTTP.createServer((req, res) => {
@@ -131,10 +137,11 @@ const SERVER = HTTP.createServer((req, res) => {
     res.statusCode = 404;
     res.end();
   } else {
-    const loanSummary = getLoanSummary(amount, duration);
+    const data = getLoanSummary(amount, duration);
+    const content = render(LOAN_SUMMARY_TEMPLATE, data);
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/html;charset=utf-8");
-    res.write(loanSummary);
+    res.write(`${content}\n`);
     res.end();
   }
 });

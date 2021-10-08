@@ -1,9 +1,18 @@
 const HTTP = require("http");
 const URL = require("url").URL;
+const PATH = require("path");
+const FS = require("fs");
 const HANDLEBARS = require("handlebars");
 
 const PORT = 3000;
 const APR = 5;
+const MIME_TYPES = {
+  ".css": "text/css",
+  ".js": "application/javascript",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+};
 const LOAN_SUMMARY_SOURCE = `
 <!DOCTYPE html>
 <html lang="en">
@@ -127,26 +136,36 @@ const SERVER = HTTP.createServer((req, res) => {
   const host = req.headers.host;
   const [amount, duration] = getParams(path, host);
   const pathname = getPathname(path, host);
+  const fileExtension = PATH.extname(pathname);
 
-  if (pathname === "/") {
-    const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
+  FS.readFile(`./public/${pathname}`, (err, data) => {
+    if (data) {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", `${MIME_TYPES[fileExtension]}`);
+      res.write(`${data}\n`);
+      res.end();
+    } else {
+      if (pathname === "/") {
+        const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
 
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html;charset=utf-8");
-    res.write(`${content}\n`);
-    res.end();
-  } else if (pathname === "/loan-offer") {
-    const data = getLoanSummary(amount, duration);
-    const content = render(LOAN_SUMMARY_TEMPLATE, data);
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/html;charset=utf-8");
+        res.write(`${content}\n`);
+        res.end();
+      } else if (pathname === "/loan-offer") {
+        const data = getLoanSummary(amount, duration);
+        const content = render(LOAN_SUMMARY_TEMPLATE, data);
 
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html;charset=utf-8");
-    res.write(`${content}\n`);
-    res.end();
-  } else {
-    res.statusCode = 404;
-    res.end();
-  }
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/html;charset=utf-8");
+        res.write(`${content}\n`);
+        res.end();
+      } else {
+        res.statusCode = 404;
+        res.end();
+      }
+    }
+  });
 });
 
 SERVER.listen(PORT, () => {

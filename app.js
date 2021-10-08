@@ -1,6 +1,5 @@
 const HTTP = require("http");
 const URL = require("url").URL;
-const QUERYSTRING = require("querystring");
 const PATH = require("path");
 const FS = require("fs");
 const HANDLEBARS = require("handlebars");
@@ -98,9 +97,11 @@ function parseFormData(request, callback) {
   });
 
   request.on("end", () => {
-    let data = QUERYSTRING.parse(body);
-    data.amount = Number(data.amount);
-    data.duration = Number(data.duration);
+    const params = new URLSearchParams(body);
+    const data = {};
+    data.amount = Number(params.get("amount"));
+    data.duration = Number(params.get("duration"));
+
     callback(data);
   });
 }

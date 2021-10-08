@@ -144,7 +144,7 @@ function getLoanSummary(data) {
   return data;
 }
 
-function getIndex(res) {
+function createIndex(res) {
   const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
 
   res.statusCode = 200;
@@ -168,7 +168,7 @@ const SERVER = HTTP.createServer((req, res) => {
     } else {
       const method = req.method;
       if (method === "GET" && pathname === "/") {
-        getIndex(res);
+        createIndex(res);
       } else if (method === "GET" && pathname === "/loan-offer") {
         const data = getLoanSummary(getParams(path, host));
         const content = render(LOAN_SUMMARY_TEMPLATE, data);

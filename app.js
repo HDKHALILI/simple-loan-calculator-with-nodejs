@@ -3,7 +3,8 @@ const URL = require("url").URL;
 const HANDLEBARS = require("handlebars");
 
 const PORT = 3000;
-const SOURCE = `
+const APR = 5;
+const LOAN_SUMMARY_SOURCE = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -54,21 +55,21 @@ const SOURCE = `
           <tr>
             <th>Amount:</th>
             <td>
-              <a href='/?amount={{amountDecrement}}&&duration={{duration}}'>- $100</a>
+              <a href='/loan-offer?amount={{amountDecrement}}&&duration={{duration}}'>- $100</a>
             <td>
             <td>\${{amount}}</td>
             <td>
-              <a href='/?amount={{amountIncrement}}&duration={{duration}}'>+ $100</a>
+              <a href='/loan-offer?amount={{amountIncrement}}&duration={{duration}}'>+ $100</a>
             <td>
           </tr>
           <tr>
             <th>Duration:</th>
             <td>
-              <a href='/?amount={{amount}}&duration={{durationDecrement}}'>- 1 year</a>
+              <a href='/loan-offer?amount={{amount}}&duration={{durationDecrement}}'>- 1 year</a>
             </td>
             <td>{{duration}}</td>
             <td>
-              <a href='/?amount={{amount}}&duration={{durationIncrement}}'>+ 1 year</a>
+              <a href='/loan-offer?amount={{amount}}&duration={{durationIncrement}}'>+ 1 year</a>
             <td>
           </tr>
           <tr>
@@ -140,7 +141,7 @@ const LOAN_FORM_SOURCE = `<!DOCTYPE html>
       <form action="/loan-offer" method="get">
         <p> All loans are offered at an PAR of {{apr}}%.</p>
         <label for="amount">How much do you want to borrow (in dollars)?</label>
-        <input type="number" name-"amount" value="" id="amount">
+        <input type="number" name="amount" value="" id="amount">
         <label for="duration">How much time do you want to pay back your loan?</label>
         <input type="number" name="duration" value="" id="duration">
         <input type="submit" name="" value="Get loan offer!">
@@ -150,7 +151,7 @@ const LOAN_FORM_SOURCE = `<!DOCTYPE html>
 </html>
 `;
 
-const LOAN_SUMMARY_TEMPLATE = HANDLEBARS.compile(SOURCE);
+const LOAN_SUMMARY_TEMPLATE = HANDLEBARS.compile(LOAN_SUMMARY_SOURCE);
 const LOAN_FORM_TEMPLATE = HANDLEBARS.compile(LOAN_FORM_SOURCE);
 
 function render(template, data) {
@@ -184,7 +185,6 @@ function calculateMonthlyPayment(amount, duration, apr) {
 }
 
 function getLoanSummary(amount, duration) {
-  const APR = 5;
   const data = {};
 
   data.amount = amount;
@@ -205,15 +205,23 @@ const SERVER = HTTP.createServer((req, res) => {
   const [amount, duration] = getParams(path, host);
   const pathname = getPathname(path, host);
 
-  if (path === "/favicon.ico") {
-    res.statusCode = 404;
-    res.end();
-  } else {
-    const data = getLoanSummary(amount, duration);
-    const content = render(LOAN_SUMMARY_TEMPLATE, data);
+  if (pathname === "/") {
+    const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
+
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/html;charset=utf-8");
     res.write(`${content}\n`);
+    res.end();
+  } else if (pathname === "/loan-offer") {
+    const data = getLoanSummary(amount, duration);
+    const content = render(LOAN_SUMMARY_TEMPLATE, data);
+
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/html;charset=utf-8");
+    res.write(`${content}\n`);
+    res.end();
+  } else {
+    res.statusCode = 404;
     res.end();
   }
 });
@@ -221,5 +229,3 @@ const SERVER = HTTP.createServer((req, res) => {
 SERVER.listen(PORT, () => {
   console.log(`Listening on ${PORT}...`);
 });
-
-const LOAN_FORM_SOURCE = 

@@ -144,6 +144,15 @@ function getLoanSummary(data) {
   return data;
 }
 
+function getIndex(res) {
+  const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
+
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/html;charset=utf-8");
+  res.write(`${content}\n`);
+  res.end();
+}
+
 const SERVER = HTTP.createServer((req, res) => {
   const path = req.url;
   const host = req.headers.host;
@@ -159,12 +168,7 @@ const SERVER = HTTP.createServer((req, res) => {
     } else {
       const method = req.method;
       if (method === "GET" && pathname === "/") {
-        const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
-
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/html;charset=utf-8");
-        res.write(`${content}\n`);
-        res.end();
+        getIndex(res);
       } else if (method === "GET" && pathname === "/loan-offer") {
         const data = getLoanSummary(getParams(path, host));
         const content = render(LOAN_SUMMARY_TEMPLATE, data);

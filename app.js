@@ -165,6 +165,18 @@ function createLoanSummary4GET(res, path) {
   res.end();
 }
 
+function createLoanSummary4POST(req, res) {
+  parseFormData(req, parsedData => {
+    const data = getLoanSummary(parsedData);
+    const content = render(LOAN_SUMMARY_TEMPLATE, data);
+
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/html");
+    res.write(`${content}\n`);
+    res.end();
+  });
+}
+
 const SERVER = HTTP.createServer((req, res) => {
   const path = req.url;
   const pathname = getPathname(path);
@@ -183,15 +195,7 @@ const SERVER = HTTP.createServer((req, res) => {
       } else if (method === "GET" && pathname === "/loan-offer") {
         createLoanSummary4GET(res, path);
       } else if (method === "POST" && pathname === "/loan-offer") {
-        parseFormData(req, parsedData => {
-          const data = getLoanSummary(parsedData);
-          const content = render(LOAN_SUMMARY_TEMPLATE, data);
-
-          res.statusCode = 200;
-          res.setHeader("Content-Type", "text/html");
-          res.write(`${content}\n`);
-          res.end();
-        });
+        createLoanSummary4POST(req, res);
       } else {
         res.statusCode = 404;
         res.end();

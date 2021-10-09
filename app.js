@@ -106,8 +106,9 @@ function parseFormData(request, callback) {
   });
 }
 
-function getParams(path, host) {
-  const myURL = new URL(path, `http://${host}`);
+function getParams(path) {
+  const host = `http://localhost:${PORT}`;
+  const myURL = new URL(path, host);
   const params = myURL.searchParams;
   const amount = Number(params.get("amount"));
   const duration = Number(params.get("duration"));
@@ -115,8 +116,9 @@ function getParams(path, host) {
   return { amount, duration };
 }
 
-function getPathname(path, host) {
-  const myURL = new URL(path, `http://${host}`);
+function getPathname(path) {
+  const host = `http://localhost:${PORT}`;
+  const myURL = new URL(path, host);
   return myURL.pathname;
 }
 
@@ -153,10 +155,19 @@ function createIndex(res) {
   res.end();
 }
 
+function createLoanSummary4GET(res, path) {
+  const data = getLoanSummary(getParams(path));
+  const content = render(LOAN_SUMMARY_TEMPLATE, data);
+
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/html;charset=utf-8");
+  res.write(`${content}\n`);
+  res.end();
+}
+
 const SERVER = HTTP.createServer((req, res) => {
   const path = req.url;
-  const host = req.headers.host;
-  const pathname = getPathname(path, host);
+  const pathname = getPathname(path);
   const fileExtension = PATH.extname(pathname);
 
   FS.readFile(`./public/${pathname}`, (err, data) => {
@@ -170,13 +181,7 @@ const SERVER = HTTP.createServer((req, res) => {
       if (method === "GET" && pathname === "/") {
         createIndex(res);
       } else if (method === "GET" && pathname === "/loan-offer") {
-        const data = getLoanSummary(getParams(path, host));
-        const content = render(LOAN_SUMMARY_TEMPLATE, data);
-
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/html;charset=utf-8");
-        res.write(`${content}\n`);
-        res.end();
+        createLoanSummary4GET(res, path);
       } else if (method === "POST" && pathname === "/loan-offer") {
         parseFormData(req, parsedData => {
           const data = getLoanSummary(parsedData);

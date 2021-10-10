@@ -2,8 +2,7 @@ const HTTP = require("http");
 const URL = require("url").URL;
 const ROUTER = require("router");
 const FINALHANDLER = require("finalhandler");
-const PATH = require("path");
-const FS = require("fs");
+const SERVE_STATIC = require("serve-static");
 const HANDLEBARS = require("handlebars");
 
 const PORT = 3000;
@@ -164,6 +163,7 @@ function getLoanSummary(data) {
 }
 
 const router = ROUTER();
+router.use(SERVE_STATIC("public"));
 
 router.get("/", (req, res) => {
   const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
@@ -197,19 +197,7 @@ router.post("/loan-offer", (req, res) => {
 });
 
 const SERVER = HTTP.createServer((req, res) => {
-  const pathname = getPathname(req.url);
-  const fileExtension = PATH.extname(pathname);
-
-  FS.readFile(`./public/${pathname}`, (err, data) => {
-    if (data) {
-      res.statusCode = 200;
-      res.setHeader("Content-Type", `${MIME_TYPES[fileExtension]}`);
-      res.write(`${data}\n`);
-      res.end();
-    } else {
-      router(req, res, FINALHANDLER(req, res));
-    }
-  });
+  router(req, res, FINALHANDLER(req, res));
 });
 
 router.get("*", (req, res) => {

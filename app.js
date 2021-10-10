@@ -1,5 +1,7 @@
 const HTTP = require("http");
 const URL = require("url").URL;
+const ROUTER = require("router");
+const FINALHANDLER = require("finalhandler");
 const PATH = require("path");
 const FS = require("fs");
 const HANDLEBARS = require("handlebars");
@@ -146,26 +148,28 @@ function getLoanSummary(data) {
   return data;
 }
 
-function createIndex(res) {
+const router = ROUTER();
+
+router.get("/", (req, res) => {
   const content = render(LOAN_FORM_TEMPLATE, { apr: APR });
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/html;charset=utf-8");
   res.write(`${content}\n`);
   res.end();
-}
+});
 
-function createLoanSummary4GET(res, path) {
-  const data = getLoanSummary(getParams(path));
+router.get("/loan-offer", (req, res) => {
+  const data = getLoanSummary(getParams(req.url));
   const content = render(LOAN_SUMMARY_TEMPLATE, data);
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/html;charset=utf-8");
   res.write(`${content}\n`);
   res.end();
-}
+});
 
-function createLoanSummary4POST(req, res) {
+router.post("/loan-offer", (req, res) => {
   parseFormData(req, parsedData => {
     const data = getLoanSummary(parsedData);
     const content = render(LOAN_SUMMARY_TEMPLATE, data);
@@ -175,11 +179,10 @@ function createLoanSummary4POST(req, res) {
     res.write(`${content}\n`);
     res.end();
   });
-}
+});
 
 const SERVER = HTTP.createServer((req, res) => {
-  const path = req.url;
-  const pathname = getPathname(path);
+  const pathname = getPathname(req.url);
   const fileExtension = PATH.extname(pathname);
 
   FS.readFile(`./public/${pathname}`, (err, data) => {
@@ -189,17 +192,7 @@ const SERVER = HTTP.createServer((req, res) => {
       res.write(`${data}\n`);
       res.end();
     } else {
-      const method = req.method;
-      if (method === "GET" && pathname === "/") {
-        createIndex(res);
-      } else if (method === "GET" && pathname === "/loan-offer") {
-        createLoanSummary4GET(res, path);
-      } else if (method === "POST" && pathname === "/loan-offer") {
-        createLoanSummary4POST(req, res);
-      } else {
-        res.statusCode = 404;
-        res.end();
-      }
+      router(req, res, FINALHANDLER(req, res));
     }
   });
 });

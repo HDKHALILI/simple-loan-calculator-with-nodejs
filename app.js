@@ -197,6 +197,11 @@ const SERVER = HTTP.createServer((req, res) => {
   });
 });
 
+router.get("*", (req, res) => {
+  res.statusCode = 404;
+  res.end();
+});
+
 SERVER.listen(PORT, () => {
   console.log(`Listening on ${PORT}...`);
 });

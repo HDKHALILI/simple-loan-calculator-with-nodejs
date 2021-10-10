@@ -59,3 +59,10 @@ input[type="submit"] {
   border: none;
   border-radius: 0.3rem;
 }
+
+.not-found {
+  width: 50%;
+  margin: 0 auto;
+  margin-top: 200px;
+  text-align: center;
+}

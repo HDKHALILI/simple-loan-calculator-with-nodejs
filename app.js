@@ -84,6 +84,21 @@ const LOAN_FORM_SOURCE = `<!DOCTYPE html>
   </body>
 </html>
 `;
+const NOT_FOUND_TEMPLATE = `
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NOT FOUND</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div class="not-found">
+    <h1>404 Not Found!</h1>
+    <a href="/">HOME</a>
+  <div>
+</body>
+</html>
+`;
 
 const LOAN_SUMMARY_TEMPLATE = HANDLEBARS.compile(LOAN_SUMMARY_SOURCE);
 const LOAN_FORM_TEMPLATE = HANDLEBARS.compile(LOAN_FORM_SOURCE);
@@ -199,6 +214,7 @@ const SERVER = HTTP.createServer((req, res) => {
 
 router.get("*", (req, res) => {
   res.statusCode = 404;
+  res.write(`${NOT_FOUND_TEMPLATE}`);
   res.end();
 });
 
